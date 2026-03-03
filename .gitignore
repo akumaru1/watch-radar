@@ -11,5 +11,7 @@ build/
 
 # Ignore system files
 .DS_Store
+.ediorconfig
 
 checklist.md
+copilot.md
