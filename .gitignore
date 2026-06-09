@@ -14,4 +14,4 @@ build/
 .ediorconfig
 
 checklist.md
-copilot.md
+.github/copilot-instructions.md

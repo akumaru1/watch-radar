@@ -1,45 +1,126 @@
 "use client";
-import { useState, useEffect } from "react";
-import MovieCard from "@/components/MovieCard"; // Import your new component
+import { useState, useEffect, useCallback } from "react";
+import MovieCard from "@/components/MovieCard";
+import SearchBar from "@/components/SearchBar";
 
 export default function Home() {
+	// State for list of movies to display
 	const [movies, setMovies] = useState([]);
+	// State to track if the search/trending fetch is loading
 	const [loading, setLoading] = useState(true);
+	// State to track error messages
 	const [error, setError] = useState(null);
+	// State for the user's typed search query
+	const [searchQuery, setSearchQuery] = useState("");
+	// State for the current list heading
+	const [displayTitle, setDisplayTitle] = useState("Trending Movies");
 
-	// Use environment variable or fallback to localhost
+	// Backend API base URL fallback
 	const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+	// Function to fetch trending movies using async/await and try/catch
+	const fetchTrendingMovies = useCallback(async () => {
+		setLoading(true);
+		setError(null);
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/movies/trending`);
+			if (!res.ok) {
+				throw new Error(`Server returned status ${res.status}`);
+			}
+			const data = await res.json();
+			setMovies(data);
+			setDisplayTitle("Trending Movies");
+		} catch (err) {
+			console.error("[Fetch Trending Error]:", err.message);
+			setError("Failed to load trending movies.");
+		} finally {
+			setLoading(false);
+		}
+	}, [API_BASE_URL]);
+
+	// Function to execute the search via the backend proxy route
+	const handleSearch = async (e) => {
+		if (e) e.preventDefault();
+
+		// If query is empty, reset back to trending movies
+		if (!searchQuery.trim()) {
+			await fetchTrendingMovies();
+			return;
+		}
+
+		setLoading(true);
+		setError(null);
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/search?q=${encodeURIComponent(searchQuery.trim())}`);
+			if (!res.ok) {
+				throw new Error(`Server returned status ${res.status}`);
+			}
+			const data = await res.json();
+
+			// TMDB Search returns a response object containing a results array
+			const searchResults = data.results || [];
+
+			// Log results to console as required by the checklist
+			console.log(`[Search Results for "${searchQuery}"]:`, searchResults);
+
+			setMovies(searchResults);
+			setDisplayTitle(`Search Results for "${searchQuery}"`);
+		} catch (err) {
+			console.error("[Search Error]:", err.message);
+			setError("Failed to search movies. Please try again.");
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// Load trending movies on component mount
 	useEffect(() => {
-		fetch(`${API_BASE_URL}/api/movies/trending`)
-			.then((res) => res.json())
-			.then((data) => {
-				setMovies(data);
-				setLoading(false);
-			})
-			.catch((err) => {
-				console.error(err);
-				setError("Failed to load movies.");
-				setLoading(false);
-			});
-	}, []);
-
-	if (loading) {
-		return <div className="p-10 text-center text-2xl text-white">Loading...</div>;
-	}
-
-	if (error) {
-		return <div className="p-10 text-center text-2xl text-red-500">{error}</div>;
-	}
+		fetchTrendingMovies();
+	}, [fetchTrendingMovies]);
 
 	return (
 		<main className="p-8 bg-gray-900 min-h-screen text-white">
-			<h1 className="text-4xl font-bold mb-8 text-center">Trending Movies</h1>
-			
-			<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-				{movies.map((movie) => (
-					<MovieCard key={movie.id} movie={movie} />
-				))}
+			<div className="max-w-7xl mx-auto">
+				<h1 className="text-4xl font-bold mb-8 text-center text-blue-400">Watch Radar</h1>
+
+				{/* Clean, abstracted Search Bar component */}
+				<SearchBar
+					searchQuery={searchQuery}
+					setSearchQuery={setSearchQuery}
+					handleSearch={handleSearch}
+					clearSearch={() => {
+						setSearchQuery("");
+						fetchTrendingMovies();
+					}}
+				/>
+
+				{/* Dynamic list header */}
+				<h2 className="text-2xl font-semibold mb-6 border-b border-gray-800 pb-2">{displayTitle}</h2>
+
+				{/* Loading indicator */}
+				{loading && (
+					<div className="p-10 text-center text-2xl text-gray-400">Loading...</div>
+				)}
+
+				{/* Error message */}
+				{error && (
+					<div className="p-10 text-center text-2xl text-red-500">{error}</div>
+				)}
+
+				{/* Results grid */}
+				{!loading && !error && (
+					movies.length > 0 ? (
+						<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+							{movies.map((movie) => (
+								<MovieCard key={movie.id} movie={movie} />
+							))}
+						</div>
+					) : (
+						<div className="p-10 text-center text-xl text-gray-500">
+							No movies found. Try searching for something else!
+						</div>
+					)
+				)}
 			</div>
 		</main>
 	);

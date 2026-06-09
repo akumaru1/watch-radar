@@ -38,7 +38,7 @@ async function startServer() {
 
 startServer();
 
-// Route to get trending movies
+// Route to trending movies
 app.get("/api/movies/trending", async (req, res) => {
 	try {
 		// We call TMDB from the server
@@ -57,5 +57,31 @@ app.get("/api/movies/trending", async (req, res) => {
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ error: "Failed to fetch movies" });
+	}
+});
+
+
+// Route to search movies
+app.get("/api/search", async (req, res) => {
+	const query = req.query.q || req.query.query;
+	if (!query) {
+		return res.status(400).json({ error: "Query parameter 'q' or 'query' is required" });
+	}
+	try {
+		const response = await axios.get(
+			"https://api.themoviedb.org/3/search/movie",
+			{
+				params: { query },
+				headers: {
+					Authorization: `Bearer ${TMDB_TOKEN}`,
+					Accept: "application/json",
+				},
+			}
+		);
+		// Send the JSON back to the Frontend
+		res.json(response.data);
+	} catch (error) {
+		console.error("[TMDB /search]", error.message);
+		res.status(500).json({ error: "Failed to search movies" });
 	}
 });
