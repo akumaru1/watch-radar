@@ -23,6 +23,10 @@ const movieSchema = new mongoose.Schema(
 			type: [String],
 			default: [],
 		},
+		voteAverage: {
+			type: Number,
+			default: 0,
+		},
 		watched: {
 			type: Boolean,
 			default: false,

@@ -3,15 +3,46 @@ import Image from "next/image";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
-export default function MovieDetail({ movie }) {
-	const { isSignedIn } = useAuth();
+export default function MovieDetail({ movie, isWatchlisted = false, onWatchlistAdded }) {
+	const { isSignedIn, userId } = useAuth();
 	const router = useRouter();
+	const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-	const handleWatchlistClick = () => {
+	const handleWatchlistClick = async () => {
 		if (!isSignedIn) {
 			router.push("/sign-in");
-		} else {
-			alert(`Successfully added "${movie.title}" to watchlist!`);
+			return;
+		}
+
+		try {
+			const genres = movie.genres?.map((g) => g.name || g) || [];
+			const res = await fetch(`${API_BASE_URL}/api/watchlist`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					userId,
+					tmdbId: movie.id,
+					title: movie.title,
+					posterPath: movie.poster_path || "",
+					genres,
+					voteAverage: movie.vote_average,
+				}),
+			});
+
+			if (!res.ok) {
+				const data = await res.json();
+				alert(data.error || "Failed to add movie to watchlist");
+			} else {
+				alert(`Successfully added "${movie.title}" to watchlist!`);
+				if (onWatchlistAdded) {
+					onWatchlistAdded();
+				}
+			}
+		} catch (err) {
+			console.error("[Watchlist Add Error]:", err.message);
+			alert("Failed to add movie to watchlist.");
 		}
 	};
 
@@ -128,12 +159,21 @@ export default function MovieDetail({ movie }) {
 
 						{/* Watchlist Quick-Action */}
 						<div className="pt-6">
-							<button 
-								onClick={handleWatchlistClick}
-								className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition shadow-lg hover:shadow-blue-600/10 cursor-pointer"
-							>
-								<span>+ Add to Watchlist</span>
-							</button>
+							{isWatchlisted ? (
+								<button 
+									disabled
+									className="flex items-center gap-2 px-6 py-3 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold rounded-xl cursor-not-allowed"
+								>
+									<span>✓ On Wishlist</span>
+								</button>
+							) : (
+								<button 
+									onClick={handleWatchlistClick}
+									className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition shadow-lg hover:shadow-blue-600/10 cursor-pointer"
+								>
+									<span>+ Add to Watchlist</span>
+								</button>
+							)}
 						</div>
 					</div>
 				</div>

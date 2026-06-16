@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@clerk/nextjs";
+
 import MovieDetail from "./_components/MovieDetail";
 import MovieTrailer from "./_components/MovieTrailer";
 import MovieCast from "./_components/MovieCast";
@@ -17,7 +19,33 @@ export default function MovieDetailPage() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 
+	const { isLoaded, isSignedIn, userId } = useAuth();
+	const [isWatchlisted, setIsWatchlisted] = useState(false);
+
 	const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+	// Check if this movie is on the watchlist
+	useEffect(() => {
+		if (!isLoaded || !isSignedIn || !userId || !id) {
+			setIsWatchlisted(false);
+			return;
+		}
+
+		const checkWatchlist = async () => {
+			try {
+				const res = await fetch(`${API_BASE_URL}/api/watchlist/${userId}`);
+				if (res.ok) {
+					const data = await res.json();
+					const found = data.some((item) => item.tmdbId === Number(id));
+					setIsWatchlisted(found);
+				}
+			} catch (err) {
+				console.error("[Check Watchlist Error]:", err.message);
+			}
+		};
+
+		checkWatchlist();
+	}, [isLoaded, isSignedIn, userId, id, API_BASE_URL]);
 
 	useEffect(() => {
 		if (!id) return;
@@ -92,7 +120,12 @@ export default function MovieDetailPage() {
 				</header>
 
 				{/* MovieDetail renders the backdrop and hero block (genres, title, timeline, overview, poster) */}
-				<MovieDetail movie={movie} />
+				<MovieDetail 
+					movie={movie} 
+					isWatchlisted={isWatchlisted} 
+					onWatchlistAdded={() => setIsWatchlisted(true)} 
+				/>
+
 
 				{/* Two-Column details layout */}
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12 mt-16">

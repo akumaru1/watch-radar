@@ -113,7 +113,7 @@ app.get("/api/movies/:id", async (req, res) => {
 // Route to save a movie to the watchlist
 app.post("/api/watchlist", async (req, res) => {
 	try {
-		const { userId, tmdbId, title, posterPath, genres } = req.body;
+		const { userId, tmdbId, title, posterPath, genres, voteAverage } = req.body;
 
 		// Validation
 		if (!userId) {
@@ -139,6 +139,7 @@ app.post("/api/watchlist", async (req, res) => {
 			title,
 			posterPath: posterPath || "",
 			genres: genres || [],
+			voteAverage: voteAverage || 0,
 			watched: false,
 		});
 

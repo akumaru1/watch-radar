@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { SignInButton, SignUpButton, Show, UserButton } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import MovieCard from "@/components/MovieCard";
 import SearchBar from "@/components/SearchBar";
+import Header from "@/components/Header";
 
 export default function Home() {
 	// State for list of movies to display
@@ -18,6 +19,32 @@ export default function Home() {
 
 	// Backend API base URL fallback
 	const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+	const { isLoaded, isSignedIn, userId } = useAuth();
+	const [watchlistIds, setWatchlistIds] = useState(new Set());
+
+	// Fetch watchlist IDs to track what is already saved
+	useEffect(() => {
+		if (!isLoaded || !isSignedIn || !userId) {
+			setWatchlistIds(new Set());
+			return;
+		}
+
+		const fetchWatchlistIds = async () => {
+			try {
+				const res = await fetch(`${API_BASE_URL}/api/watchlist/${userId}`);
+				if (res.ok) {
+					const data = await res.json();
+					const ids = new Set(data.map((item) => item.tmdbId));
+					setWatchlistIds(ids);
+				}
+			} catch (err) {
+				console.error("[Fetch Watchlist IDs Error]:", err.message);
+			}
+		};
+
+		fetchWatchlistIds();
+	}, [isLoaded, isSignedIn, userId, API_BASE_URL]);
 
 	// Function to fetch trending movies using async/await and try/catch
 	const fetchTrendingMovies = useCallback(async () => {
@@ -82,26 +109,7 @@ export default function Home() {
 	return (
 		<main className="p-8 bg-gray-900 min-h-screen text-white">
 			<div className="max-w-7xl mx-auto">
-				<header className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 border-b border-gray-800 pb-6">
-					<h1 className="text-4xl font-bold text-blue-400">Watch Radar</h1>
-					<div className="flex items-center gap-4">
-						<Show when="signed-out">
-							<SignInButton mode="modal">
-								<button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 transition duration-200 text-white font-medium rounded-lg text-sm shadow-md shadow-blue-900/30 cursor-pointer">
-									Sign In
-								</button>
-							</SignInButton>
-							<SignUpButton mode="modal">
-								<button className="px-4 py-2 bg-gray-800 hover:bg-gray-700 transition duration-200 text-white font-medium rounded-lg text-sm border border-gray-700 shadow-sm cursor-pointer">
-									Sign Up
-								</button>
-							</SignUpButton>
-						</Show>
-						<Show when="signed-in">
-							<UserButton afterSignOutUrl="/" />
-						</Show>
-					</div>
-				</header>
+				<Header />
 
 				{/* Clean, abstracted Search Bar component */}
 				<SearchBar
@@ -132,8 +140,20 @@ export default function Home() {
 					movies.length > 0 ? (
 						<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
 							{movies.map((movie) => (
-								<MovieCard key={movie.id} movie={movie} />
+								<MovieCard
+									key={movie.id}
+									movie={movie}
+									isWatchlisted={watchlistIds.has(movie.id)}
+									onWatchlistAdded={(tmdbId) => {
+										setWatchlistIds((prev) => {
+											const next = new Set(prev);
+											next.add(tmdbId);
+											return next;
+										});
+									}}
+								/>
 							))}
+
 						</div>
 					) : (
 						<div className="p-10 text-center text-xl text-gray-500">
