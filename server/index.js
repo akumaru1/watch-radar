@@ -85,3 +85,27 @@ app.get("/api/search", async (req, res) => {
 		res.status(500).json({ error: "Failed to search movies" });
 	}
 });
+
+// Route to get movie details by ID
+app.get("/api/movies/:id", async (req, res) => {
+	const { id } = req.params;
+	try {
+		const response = await axios.get(
+			`https://api.themoviedb.org/3/movie/${id}`,
+			{
+				params: {
+					append_to_response: "credits,videos",
+				},
+				headers: {
+					Authorization: `Bearer ${TMDB_TOKEN}`,
+					Accept: "application/json",
+				},
+			}
+		);
+		res.json(response.data);
+	} catch (error) {
+		console.error(`[TMDB /movie/${id}]`, error.message);
+		res.status(500).json({ error: "Failed to fetch movie details" });
+	}
+});
+

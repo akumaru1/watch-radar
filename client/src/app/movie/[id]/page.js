@@ -1,0 +1,113 @@
+"use client";
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import MovieDetail from "./_components/MovieDetail";
+import MovieTrailer from "./_components/MovieTrailer";
+import MovieCast from "./_components/MovieCast";
+import MovieStats from "./_components/MovieStats";
+import MovieSkeleton from "./_components/MovieSkeleton";
+
+export default function MovieDetailPage() {
+	const params = useParams();
+	const router = useRouter();
+	const { id } = params;
+
+	const [movie, setMovie] = useState(null);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState(null);
+
+	const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+	useEffect(() => {
+		if (!id) return;
+
+		const fetchMovieDetails = async () => {
+			setLoading(true);
+			setError(null);
+			try {
+				const res = await fetch(`${API_BASE_URL}/api/movies/${id}`);
+				if (!res.ok) {
+					if (res.status === 404) {
+						throw new Error("Movie not found");
+					}
+					throw new Error(`Server returned status ${res.status}`);
+				}
+				const data = await res.json();
+				setMovie(data);
+			} catch (err) {
+				console.error("[Fetch Movie Details Error]:", err.message);
+				setError(err.message || "Failed to load movie details.");
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchMovieDetails();
+	}, [id, API_BASE_URL]);
+
+	if (loading) {
+		return <MovieSkeleton />;
+	}
+
+	if (error || !movie) {
+		return (
+			<div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-6">
+				<div className="bg-red-900/20 border border-red-800 rounded-lg p-8 max-w-md text-center">
+					<h2 className="text-2xl font-bold text-red-500 mb-2">Error</h2>
+					<p className="text-gray-300 mb-6">{error || "Could not retrieve movie details."}</p>
+					<Link
+						href="/"
+						className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition inline-block shadow-lg"
+					>
+						Return to Discovery
+					</Link>
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<main className="min-h-screen bg-gray-950 text-gray-100 font-sans pb-16 relative overflow-x-hidden">
+			{/* Dynamic SEO Title simulation via useEffect */}
+			<title>{`${movie.title} - Watch Radar`}</title>
+
+			{/* Content layer */}
+			<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+				{/* Top navigation header */}
+				<header className="mb-8 flex items-center justify-between">
+					<button
+						onClick={() => router.push("/")}
+						className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-900/80 backdrop-blur-sm border border-gray-800 hover:bg-gray-800 hover:text-blue-400 transition shadow-md group cursor-pointer"
+					>
+						<span className="inline-block transform group-hover:-translate-x-1 transition duration-200">
+							&larr;
+						</span>
+						<span>Back to Discovery</span>
+					</button>
+
+					<div className="text-xs uppercase tracking-widest text-blue-400 font-bold bg-blue-500/10 px-3 py-1.5 rounded-full border border-blue-500/20">
+						Watch Radar Premium
+					</div>
+				</header>
+
+				{/* MovieDetail renders the backdrop and hero block (genres, title, timeline, overview, poster) */}
+				<MovieDetail movie={movie} />
+
+				{/* Two-Column details layout */}
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12 mt-16">
+					{/* Left Column (2/3 width on large screens): Trailer & Cast list */}
+					<div className="lg:col-span-2 space-y-12">
+						<MovieTrailer movie={movie} />
+						<MovieCast movie={movie} />
+					</div>
+
+					{/* Right Column (1/3 width on large screens): Sidebar details card */}
+					<div className="space-y-8">
+						<MovieStats movie={movie} />
+					</div>
+				</div>
+			</div>
+		</main>
+	);
+}
