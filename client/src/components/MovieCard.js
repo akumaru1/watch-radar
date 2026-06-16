@@ -1,7 +1,22 @@
+"use client";
 import Image from "next/image";
 import Link from "next/link";
+import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 export default function MovieCard({ movie }) {
+	const { isSignedIn } = useAuth();
+	const router = useRouter();
+
+	const handleWatchlistClick = (e) => {
+		e.preventDefault();
+		if (!isSignedIn) {
+			router.push("/sign-in");
+		} else {
+			alert(`Successfully added "${movie.title}" to watchlist!`);
+		}
+	};
+
 	// Logic for the image URL
 	const imageUrl = movie.poster_path 
 		? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
@@ -28,7 +43,10 @@ export default function MovieCard({ movie }) {
 				<span className="bg-yellow-500 text-black px-2 py-1 rounded text-xs font-bold">
 					 ⭐ {movie.vote_average?.toFixed(1) || "0.0"}
 				</span>
-				<button className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm transition">
+				<button 
+					onClick={handleWatchlistClick}
+					className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm transition cursor-pointer"
+				>
 					+ Watchlist
 				</button>
 			</div>

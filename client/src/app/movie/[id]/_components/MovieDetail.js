@@ -1,6 +1,20 @@
+"use client";
 import Image from "next/image";
+import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 export default function MovieDetail({ movie }) {
+	const { isSignedIn } = useAuth();
+	const router = useRouter();
+
+	const handleWatchlistClick = () => {
+		if (!isSignedIn) {
+			router.push("/sign-in");
+		} else {
+			alert(`Successfully added "${movie.title}" to watchlist!`);
+		}
+	};
+
 	const backdropUrl = movie.backdrop_path
 		? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
 		: null;
@@ -114,7 +128,10 @@ export default function MovieDetail({ movie }) {
 
 						{/* Watchlist Quick-Action */}
 						<div className="pt-6">
-							<button className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition shadow-lg hover:shadow-blue-600/10 cursor-pointer">
+							<button 
+								onClick={handleWatchlistClick}
+								className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition shadow-lg hover:shadow-blue-600/10 cursor-pointer"
+							>
 								<span>+ Add to Watchlist</span>
 							</button>
 						</div>
