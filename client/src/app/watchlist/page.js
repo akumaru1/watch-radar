@@ -45,6 +45,18 @@ export default function WatchlistPage() {
 		setWatchlist((prev) => prev.filter((movie) => movie._id !== id));
 	};
 
+	const moviesCount = watchlist.filter((item) => item.mediaType === "movie" || !item.mediaType).length;
+	const showsCount = watchlist.filter((item) => item.mediaType === "tv").length;
+
+	let countText = "";
+	if (moviesCount > 0 && showsCount > 0) {
+		countText = `${moviesCount} ${moviesCount === 1 ? "Movie" : "Movies"}, ${showsCount} ${showsCount === 1 ? "Show" : "Shows"}`;
+	} else if (showsCount > 0) {
+		countText = `${showsCount} ${showsCount === 1 ? "Show" : "Shows"}`;
+	} else {
+		countText = `${moviesCount} ${moviesCount === 1 ? "Movie" : "Movies"}`;
+	}
+
 	if (!isLoaded || loading) {
 		return (
 			<main className="p-8 bg-gray-900 min-h-screen text-white">
@@ -87,7 +99,7 @@ export default function WatchlistPage() {
 				<div className="flex justify-between items-center mb-6 pb-2 border-b border-gray-800">
 					<h2 className="text-2xl font-semibold">Your Watchlist</h2>
 					<span className="text-sm text-gray-400 font-medium bg-gray-800 px-3 py-1 rounded-full border border-gray-700">
-						{watchlist.length} {watchlist.length === 1 ? "Movie" : "Movies"}
+						{countText}
 					</span>
 				</div>
 

@@ -61,6 +61,24 @@ app.get("/api/movies/trending", async (req, res) => {
 	}
 });
 
+// Route to trending TV shows
+app.get("/api/shows/trending", async (req, res) => {
+	try {
+		const response = await axios.get(
+			"https://api.themoviedb.org/3/trending/tv/day",
+			{
+				headers: {
+					Authorization: `Bearer ${TMDB_TOKEN}`,
+					Accept: "application/json",
+				},
+			}
+		);
+		res.json(response.data.results);
+	} catch (error) {
+		console.error("[TMDB /shows/trending]", error.message);
+		res.status(500).json({ error: "Failed to fetch TV shows" });
+	}
+});
 
 // Route to search movies
 app.get("/api/search", async (req, res) => {
@@ -87,6 +105,30 @@ app.get("/api/search", async (req, res) => {
 	}
 });
 
+// Route to search TV shows
+app.get("/api/search/shows", async (req, res) => {
+	const query = req.query.q || req.query.query;
+	if (!query) {
+		return res.status(400).json({ error: "Query parameter 'q' or 'query' is required" });
+	}
+	try {
+		const response = await axios.get(
+			"https://api.themoviedb.org/3/search/tv",
+			{
+				params: { query },
+				headers: {
+					Authorization: `Bearer ${TMDB_TOKEN}`,
+					Accept: "application/json",
+				},
+			}
+		);
+		res.json(response.data);
+	} catch (error) {
+		console.error("[TMDB /search/shows]", error.message);
+		res.status(500).json({ error: "Failed to search TV shows" });
+	}
+});
+
 // Route to get movie details by ID
 app.get("/api/movies/:id", async (req, res) => {
 	const { id } = req.params;
@@ -110,10 +152,33 @@ app.get("/api/movies/:id", async (req, res) => {
 	}
 });
 
-// Route to save a movie to the watchlist
+// Route to get TV show details by ID
+app.get("/api/shows/:id", async (req, res) => {
+	const { id } = req.params;
+	try {
+		const response = await axios.get(
+			`https://api.themoviedb.org/3/tv/${id}`,
+			{
+				params: {
+					append_to_response: "credits,videos",
+				},
+				headers: {
+					Authorization: `Bearer ${TMDB_TOKEN}`,
+					Accept: "application/json",
+				},
+			}
+		);
+		res.json(response.data);
+	} catch (error) {
+		console.error(`[TMDB /shows/${id}]`, error.message);
+		res.status(500).json({ error: "Failed to fetch TV show details" });
+	}
+});
+
+// Route to save a movie or TV show to the watchlist
 app.post("/api/watchlist", async (req, res) => {
 	try {
-		const { userId, tmdbId, title, posterPath, genres, voteAverage } = req.body;
+		const { userId, tmdbId, title, posterPath, genres, voteAverage, mediaType } = req.body;
 
 		// Validation
 		if (!userId) {
@@ -126,10 +191,12 @@ app.post("/api/watchlist", async (req, res) => {
 			return res.status(400).json({ error: "title is required" });
 		}
 
-		// Check if movie already exists in watchlist for this user
-		const existingMovie = await Movie.findOne({ userId, tmdbId });
+		const resolvedMediaType = mediaType || "movie";
+
+		// Check if item already exists in watchlist for this user
+		const existingMovie = await Movie.findOne({ userId, tmdbId, mediaType: resolvedMediaType });
 		if (existingMovie) {
-			return res.status(400).json({ error: "Movie already in watchlist" });
+			return res.status(400).json({ error: `${resolvedMediaType === "tv" ? "TV show" : "Movie"} already in watchlist` });
 		}
 
 		// Create and save new watchlist item
@@ -140,6 +207,7 @@ app.post("/api/watchlist", async (req, res) => {
 			posterPath: posterPath || "",
 			genres: genres || [],
 			voteAverage: voteAverage || 0,
+			mediaType: resolvedMediaType,
 			watched: false,
 		});
 
@@ -147,7 +215,7 @@ app.post("/api/watchlist", async (req, res) => {
 		res.status(201).json(movie);
 	} catch (error) {
 		console.error("[POST /api/watchlist]", error.message);
-		res.status(500).json({ error: "Failed to save movie to watchlist" });
+		res.status(500).json({ error: "Failed to save item to watchlist" });
 	}
 });
 

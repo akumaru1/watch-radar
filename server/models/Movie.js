@@ -27,6 +27,11 @@ const movieSchema = new mongoose.Schema(
 			type: Number,
 			default: 0,
 		},
+		mediaType: {
+			type: String,
+			enum: ["movie", "tv"],
+			default: "movie",
+		},
 		watched: {
 			type: Boolean,
 			default: false,

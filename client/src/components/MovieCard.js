@@ -11,7 +11,8 @@ export default function MovieCard({ movie, isWatchlistPage = false, onRemove, is
 	const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 	const id = movie.tmdbId || movie.id;
-	const title = movie.title;
+	const mediaType = movie.mediaType || (movie.first_air_date || movie.name ? "tv" : "movie");
+	const title = movie.title || movie.name;
 	const posterPath = movie.posterPath !== undefined ? movie.posterPath : movie.poster_path;
 	const voteAverage = movie.voteAverage !== undefined ? movie.voteAverage : movie.vote_average;
 
@@ -36,12 +37,13 @@ export default function MovieCard({ movie, isWatchlistPage = false, onRemove, is
 					posterPath: posterPath || "",
 					genres,
 					voteAverage: voteAverage || 0,
+					mediaType,
 				}),
 			});
 
 			if (!res.ok) {
 				const data = await res.json();
-				alert(data.error || "Failed to add movie to watchlist");
+				alert(data.error || `Failed to add ${mediaType === "tv" ? "TV show" : "movie"} to watchlist`);
 			} else {
 				alert(`Successfully added "${title}" to watchlist!`);
 				if (onWatchlistAdded) {
@@ -50,7 +52,7 @@ export default function MovieCard({ movie, isWatchlistPage = false, onRemove, is
 			}
 		} catch (err) {
 			console.error("[Watchlist Add Error]:", err.message);
-			alert("Failed to add movie to watchlist.");
+			alert(`Failed to add ${mediaType === "tv" ? "TV show" : "movie"} to watchlist.`);
 		}
 	};
 
@@ -72,7 +74,7 @@ export default function MovieCard({ movie, isWatchlistPage = false, onRemove, is
 			}
 		} catch (err) {
 			console.error("[Watchlist Remove Error]:", err.message);
-			alert("Failed to remove movie from watchlist.");
+			alert("Failed to remove item from watchlist.");
 		}
 	};
 
@@ -84,15 +86,17 @@ export default function MovieCard({ movie, isWatchlistPage = false, onRemove, is
 	// Normalize display release year
 	const releaseYear = movie.release_date
 		? movie.release_date.split("-")[0]
-		: movie.createdAt
-			? new Date(movie.createdAt).getFullYear()
-			: "N/A";
+		: movie.first_air_date
+			? movie.first_air_date.split("-")[0]
+			: movie.createdAt
+				? new Date(movie.createdAt).getFullYear()
+				: "N/A";
 
 	const genresList = getGenreNames(movie);
 
 	return (
 		<div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg border border-gray-700 transition hover:scale-105 flex flex-col justify-between h-full">
-			<Link href={`/movie/${id}`} className="block flex-grow">
+			<Link href={`/${mediaType}/${id}`} className="block flex-grow">
 				<Image
 					src={imageUrl}
 					alt={title}
@@ -108,7 +112,7 @@ export default function MovieCard({ movie, isWatchlistPage = false, onRemove, is
 						</p>
 					)}
 					<p className="text-gray-500 text-xs mt-1 italic">
-						Released: {releaseYear}
+						{mediaType === "tv" ? "First Aired" : "Released"}: {releaseYear}
 					</p>
 				</div>
 			</Link>
