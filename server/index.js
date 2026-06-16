@@ -4,6 +4,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
+const Movie = require("./models/Movie");
 
 const app = express();
 app.use(cors());
@@ -109,3 +110,69 @@ app.get("/api/movies/:id", async (req, res) => {
 	}
 });
 
+// Route to save a movie to the watchlist
+app.post("/api/watchlist", async (req, res) => {
+	try {
+		const { userId, tmdbId, title, posterPath, genres } = req.body;
+
+		// Validation
+		if (!userId) {
+			return res.status(400).json({ error: "userId is required" });
+		}
+		if (!tmdbId) {
+			return res.status(400).json({ error: "tmdbId is required" });
+		}
+		if (!title) {
+			return res.status(400).json({ error: "title is required" });
+		}
+
+		// Check if movie already exists in watchlist for this user
+		const existingMovie = await Movie.findOne({ userId, tmdbId });
+		if (existingMovie) {
+			return res.status(400).json({ error: "Movie already in watchlist" });
+		}
+
+		// Create and save new watchlist item
+		const movie = new Movie({
+			userId,
+			tmdbId,
+			title,
+			posterPath: posterPath || "",
+			genres: genres || [],
+			watched: false,
+		});
+
+		await movie.save();
+		res.status(201).json(movie);
+	} catch (error) {
+		console.error("[POST /api/watchlist]", error.message);
+		res.status(500).json({ error: "Failed to save movie to watchlist" });
+	}
+});
+
+// Route to fetch all watchlist movies for a user
+app.get("/api/watchlist/:userId", async (req, res) => {
+	const { userId } = req.params;
+	try {
+		const watchlist = await Movie.find({ userId }).sort({ createdAt: -1 });
+		res.json(watchlist);
+	} catch (error) {
+		console.error(`[GET /api/watchlist/${userId}]`, error.message);
+		res.status(500).json({ error: "Failed to fetch watchlist" });
+	}
+});
+
+// Route to remove a movie from the watchlist
+app.delete("/api/watchlist/:id", async (req, res) => {
+	const { id } = req.params;
+	try {
+		const deletedMovie = await Movie.findByIdAndDelete(id);
+		if (!deletedMovie) {
+			return res.status(404).json({ error: "Watchlist item not found" });
+		}
+		res.json({ message: "Movie removed from watchlist", deletedMovie });
+	} catch (error) {
+		console.error(`[DELETE /api/watchlist/${id}]`, error.message);
+		res.status(500).json({ error: "Failed to remove movie from watchlist" });
+	}
+});
