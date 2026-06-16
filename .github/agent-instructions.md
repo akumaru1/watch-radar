@@ -89,5 +89,20 @@ please include a comment in the code to be helpfull what that part do
 
 ---
 
+# Antigravity Artifact Management Rule
+After completing any task or command that generates an Implementation Plan or Walkthrough artifact:
+
+1. **Save Files:** 
+   - Save the Implementation Plan to `./docs/plans/[task_name_slug]_plan.md`.
+   - Save the Walkthrough to `./docs/walkthroughs/[task_name_slug]_walkthrough.md`.
+
+2. **Update Checklist:**
+   - Locate the `./checklist.md` file in the workspace root.
+   - Find the exact Markdown list item matching the task you just completed (including sub-items like "Create a 'Surprise Me' button...").
+   - Append the hotlinks to the end of that specific line in this format: 
+     ` | [📋 Plan](docs/plans/[task_name_slug]_plan.md) | [🚶 Walkthrough](docs/walkthroughs/[task_name_slug]_walkthrough.md)`
+
+---
+
 
 

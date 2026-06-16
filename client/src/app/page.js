@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { SignInButton, SignUpButton, Show, UserButton } from "@clerk/nextjs";
 import MovieCard from "@/components/MovieCard";
 import SearchBar from "@/components/SearchBar";
 
@@ -81,7 +82,26 @@ export default function Home() {
 	return (
 		<main className="p-8 bg-gray-900 min-h-screen text-white">
 			<div className="max-w-7xl mx-auto">
-				<h1 className="text-4xl font-bold mb-8 text-center text-blue-400">Watch Radar</h1>
+				<header className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 border-b border-gray-800 pb-6">
+					<h1 className="text-4xl font-bold text-blue-400">Watch Radar</h1>
+					<div className="flex items-center gap-4">
+						<Show when="signed-out">
+							<SignInButton mode="modal">
+								<button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 transition duration-200 text-white font-medium rounded-lg text-sm shadow-md shadow-blue-900/30 cursor-pointer">
+									Sign In
+								</button>
+							</SignInButton>
+							<SignUpButton mode="modal">
+								<button className="px-4 py-2 bg-gray-800 hover:bg-gray-700 transition duration-200 text-white font-medium rounded-lg text-sm border border-gray-700 shadow-sm cursor-pointer">
+									Sign Up
+								</button>
+							</SignUpButton>
+						</Show>
+						<Show when="signed-in">
+							<UserButton afterSignOutUrl="/" />
+						</Show>
+					</div>
+				</header>
 
 				{/* Clean, abstracted Search Bar component */}
 				<SearchBar
