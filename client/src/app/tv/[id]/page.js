@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 
@@ -9,10 +9,11 @@ import TVTrailer from "./_components/TVTrailer";
 import TVCast from "./_components/TVCast";
 import TVStats from "./_components/TVStats";
 import TVSkeleton from "./_components/TVSkeleton";
+import Header from "@/components/Header";
+
 
 export default function TVDetailPage() {
 	const params = useParams();
-	const router = useRouter();
 	const { id } = params;
 
 	const [show, setShow] = useState(null);
@@ -103,21 +104,7 @@ export default function TVDetailPage() {
 			{/* Content layer */}
 			<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
 				{/* Top navigation header */}
-				<header className="mb-8 flex items-center justify-between">
-					<button
-						onClick={() => router.push("/")}
-						className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-900/80 backdrop-blur-sm border border-gray-800 hover:bg-gray-800 hover:text-blue-400 transition shadow-md group cursor-pointer"
-					>
-						<span className="inline-block transform group-hover:-translate-x-1 transition duration-200">
-							&larr;
-						</span>
-						<span>Back to Discovery</span>
-					</button>
-
-					<div className="text-xs uppercase tracking-widest text-blue-400 font-bold bg-blue-500/10 px-3 py-1.5 rounded-full border border-blue-500/20">
-						Watch Radar Premium
-					</div>
-				</header>
+				<Header />
 
 				{/* TVDetail renders the backdrop and hero block */}
 				<TVDetail 

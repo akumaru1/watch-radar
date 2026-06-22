@@ -126,8 +126,8 @@ export default function Home() {
 	}, [fetchTrendingContent]);
 
 	return (
-		<main className="p-8 bg-gray-900 min-h-screen text-white">
-			<div className="max-w-7xl mx-auto">
+		<main className="min-h-screen bg-gray-950 text-gray-100 font-sans pb-16 relative overflow-x-hidden">
+			<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
 				<Header />
 
 				{/* Clean, abstracted Search Bar component */}

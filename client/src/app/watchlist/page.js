@@ -59,8 +59,8 @@ export default function WatchlistPage() {
 
 	if (!isLoaded || loading) {
 		return (
-			<main className="p-8 bg-gray-900 min-h-screen text-white">
-				<div className="max-w-7xl mx-auto">
+			<main className="min-h-screen bg-gray-950 text-gray-100 font-sans pb-16 relative overflow-x-hidden">
+				<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
 					<Header />
 					<div className="flex flex-col items-center justify-center py-20">
 						<div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -73,8 +73,8 @@ export default function WatchlistPage() {
 
 	if (error) {
 		return (
-			<main className="p-8 bg-gray-900 min-h-screen text-white">
-				<div className="max-w-7xl mx-auto">
+			<main className="min-h-screen bg-gray-950 text-gray-100 font-sans pb-16 relative overflow-x-hidden">
+				<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
 					<Header />
 					<div className="flex flex-col items-center justify-center py-20 text-center">
 						<div className="text-red-500 text-5xl mb-4">⚠️</div>
@@ -92,8 +92,8 @@ export default function WatchlistPage() {
 	}
 
 	return (
-		<main className="p-8 bg-gray-900 min-h-screen text-white">
-			<div className="max-w-7xl mx-auto">
+		<main className="min-h-screen bg-gray-950 text-gray-100 font-sans pb-16 relative overflow-x-hidden">
+			<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
 				<Header />
 
 				<div className="flex justify-between items-center mb-6 pb-2 border-b border-gray-800">
