@@ -231,6 +231,34 @@ app.get("/api/watchlist/:userId", async (req, res) => {
 	}
 });
 
+// Route to update a watchlist item (e.g. toggle watched status)
+app.patch("/api/watchlist/:id", async (req, res) => {
+	const { id } = req.params;
+	const { watched } = req.body;
+
+	if (typeof watched !== "boolean") {
+		return res.status(400).json({ error: "watched field must be a boolean" });
+	}
+
+	try {
+		const updatedMovie = await Movie.findByIdAndUpdate(
+			id,
+			{ watched },
+			{ new: true }
+		);
+
+		if (!updatedMovie) {
+			return res.status(404).json({ error: "Watchlist item not found" });
+		}
+
+		res.json(updatedMovie);
+	} catch (error) {
+		console.error(`[PATCH /api/watchlist/${id}]`, error.message);
+		res.status(500).json({ error: "Failed to update watchlist item" });
+	}
+});
+
+
 // Route to remove a movie from the watchlist
 app.delete("/api/watchlist/:id", async (req, res) => {
 	const { id } = req.params;
@@ -243,5 +271,27 @@ app.delete("/api/watchlist/:id", async (req, res) => {
 	} catch (error) {
 		console.error(`[DELETE /api/watchlist/${id}]`, error.message);
 		res.status(500).json({ error: "Failed to remove movie from watchlist" });
+	}
+});
+
+// Route to remove a movie/show from the watchlist by userId and tmdbId
+app.delete("/api/watchlist/user/:userId/item/:tmdbId", async (req, res) => {
+	const { userId, tmdbId } = req.params;
+	const { mediaType } = req.query;
+
+	try {
+		const query = { userId, tmdbId: Number(tmdbId) };
+		if (mediaType) {
+			query.mediaType = mediaType;
+		}
+
+		const deletedMovie = await Movie.findOneAndDelete(query);
+		if (!deletedMovie) {
+			return res.status(404).json({ error: "Watchlist item not found" });
+		}
+		res.json({ message: "Item removed from watchlist", deletedMovie });
+	} catch (error) {
+		console.error(`[DELETE /api/watchlist/user/${userId}/item/${tmdbId}]`, error.message);
+		res.status(500).json({ error: "Failed to remove item from watchlist" });
 	}
 });

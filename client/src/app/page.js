@@ -165,13 +165,20 @@ export default function Home() {
 									<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
 										{movies.slice(0, 18).map((movie) => (
 											<MovieCard
-												key={movie.id}
+												key={movie.tmdbId || movie.id}
 												movie={movie}
-												isWatchlisted={watchlistIds.has(movie.id)}
+												isWatchlisted={watchlistIds.has(movie.tmdbId || movie.id)}
 												onWatchlistAdded={(tmdbId) => {
 													setWatchlistIds((prev) => {
 														const next = new Set(prev);
 														next.add(tmdbId);
+														return next;
+													});
+												}}
+												onWatchlistRemoved={(tmdbId) => {
+													setWatchlistIds((prev) => {
+														const next = new Set(prev);
+														next.delete(tmdbId);
 														return next;
 													});
 												}}
@@ -194,13 +201,20 @@ export default function Home() {
 									<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
 										{shows.slice(0, 18).map((show) => (
 											<MovieCard
-												key={show.id}
+												key={show.tmdbId || show.id}
 												movie={show}
-												isWatchlisted={watchlistIds.has(show.id)}
+												isWatchlisted={watchlistIds.has(show.tmdbId || show.id)}
 												onWatchlistAdded={(tmdbId) => {
 													setWatchlistIds((prev) => {
 														const next = new Set(prev);
 														next.add(tmdbId);
+														return next;
+													});
+												}}
+												onWatchlistRemoved={(tmdbId) => {
+													setWatchlistIds((prev) => {
+														const next = new Set(prev);
+														next.delete(tmdbId);
 														return next;
 													});
 												}}
@@ -226,13 +240,20 @@ export default function Home() {
 									<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
 										{movies.slice(0, 18).map((movie) => (
 											<MovieCard
-												key={movie.id}
+												key={movie.tmdbId || movie.id}
 												movie={movie}
-												isWatchlisted={watchlistIds.has(movie.id)}
+												isWatchlisted={watchlistIds.has(movie.tmdbId || movie.id)}
 												onWatchlistAdded={(tmdbId) => {
 													setWatchlistIds((prev) => {
 														const next = new Set(prev);
 														next.add(tmdbId);
+														return next;
+													});
+												}}
+												onWatchlistRemoved={(tmdbId) => {
+													setWatchlistIds((prev) => {
+														const next = new Set(prev);
+														next.delete(tmdbId);
 														return next;
 													});
 												}}
@@ -255,13 +276,20 @@ export default function Home() {
 									<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
 										{shows.slice(0, 18).map((show) => (
 											<MovieCard
-												key={show.id}
+												key={show.tmdbId || show.id}
 												movie={show}
-												isWatchlisted={watchlistIds.has(show.id)}
+												isWatchlisted={watchlistIds.has(show.tmdbId || show.id)}
 												onWatchlistAdded={(tmdbId) => {
 													setWatchlistIds((prev) => {
 														const next = new Set(prev);
 														next.add(tmdbId);
+														return next;
+													});
+												}}
+												onWatchlistRemoved={(tmdbId) => {
+													setWatchlistIds((prev) => {
+														const next = new Set(prev);
+														next.delete(tmdbId);
 														return next;
 													});
 												}}

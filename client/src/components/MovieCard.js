@@ -5,7 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { getGenreNames } from "@/utils/genreHelper";
 
-export default function MovieCard({ movie, isWatchlistPage = false, onRemove, isWatchlisted = false, onWatchlistAdded }) {
+export default function MovieCard({ movie, isWatchlistPage = false, onRemove, onToggleWatched, isWatchlisted = false, onWatchlistAdded, onWatchlistRemoved }) {
 	const { isSignedIn, userId } = useAuth();
 	const router = useRouter();
 	const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -78,6 +78,60 @@ export default function MovieCard({ movie, isWatchlistPage = false, onRemove, is
 		}
 	};
 
+	const handleWatchlistRemoveClick = async (e) => {
+		e.preventDefault();
+		if (!isSignedIn || !userId) {
+			router.push("/sign-in");
+			return;
+		}
+
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/watchlist/user/${userId}/item/${id}?mediaType=${mediaType}`, {
+				method: "DELETE",
+			});
+
+			if (!res.ok) {
+				const data = await res.json();
+				throw new Error(data.error || "Failed to remove");
+			}
+
+			alert(`Removed "${title}" from watchlist.`);
+			if (onWatchlistRemoved) {
+				onWatchlistRemoved(id);
+			}
+		} catch (err) {
+			console.error("[Watchlist Remove Toggle Error]:", err.message);
+			alert(`Failed to remove ${mediaType === "tv" ? "TV show" : "movie"} from watchlist.`);
+		}
+	};
+
+	const handleToggleWatchedClick = async (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		try {
+			const newWatched = !movie.watched;
+			const res = await fetch(`${API_BASE_URL}/api/watchlist/${movie._id}`, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ watched: newWatched }),
+			});
+
+			if (!res.ok) {
+				const data = await res.json();
+				throw new Error(data.error || "Failed to update watched status");
+			}
+
+			if (onToggleWatched) {
+				onToggleWatched(movie._id, newWatched);
+			}
+		} catch (err) {
+			console.error("[Watchlist Toggle Watched Error]:", err.message);
+			alert("Failed to update watched status.");
+		}
+	};
+
 	// Logic for the image URL
 	const imageUrl = posterPath
 		? `https://image.tmdb.org/t/p/w500${posterPath}`
@@ -95,14 +149,27 @@ export default function MovieCard({ movie, isWatchlistPage = false, onRemove, is
 	const genresList = getGenreNames(movie);
 
 	return (
-		<div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg border border-gray-700 transition hover:scale-105 flex flex-col justify-between h-full">
+		<div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg border border-gray-700 transition hover:scale-105 flex flex-col justify-between h-full relative">
+			{isWatchlistPage && (
+				<button
+					onClick={handleToggleWatchedClick}
+					className={`absolute top-2 right-2 z-20 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded shadow-md backdrop-blur-xs border transition duration-200 cursor-pointer flex items-center gap-1 ${movie.watched
+						? "bg-emerald-600/90 hover:bg-emerald-500 text-white border-emerald-500/30"
+						: "bg-gray-900/80 hover:bg-gray-850 text-gray-250 border-gray-700"
+						}`}
+					title={movie.watched ? "Mark as Unwatched" : "Mark as Watched"}
+				>
+					{movie.watched ? "✓ Watched" : "👁️ Watch"}
+				</button>
+			)}
 			<Link href={`/${mediaType}/${id}`} className="block flex-grow">
 				<Image
 					src={imageUrl}
 					alt={title}
 					width={500}
 					height={750}
-					className="w-full h-auto cursor-pointer"
+					className={`w-full h-auto cursor-pointer transition duration-300 ${isWatchlistPage && movie.watched ? "opacity-50 grayscale-[15%]" : "hover:opacity-90"
+						}`}
 				/>
 				<div className="p-4 pb-0">
 					<h2 className="font-bold text-lg truncate hover:text-blue-400 transition">{title}</h2>
@@ -124,17 +191,19 @@ export default function MovieCard({ movie, isWatchlistPage = false, onRemove, is
 				)}
 				{isWatchlistPage ? (
 					<button
-						onClick={handleRemoveClick}
-						className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm transition cursor-pointer font-medium whitespace-nowrap shrink-0"
+						onClick={handleWatchlistRemoveClick}
+						className="bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-500/20 px-2.5 py-1.5 rounded text-xs font-medium cursor-pointer whitespace-nowrap shrink-0 transition duration-200"
+						title="Remove from Watchlist"
 					>
-						- Remove
+						✓ Watchlist
 					</button>
 				) : isWatchlisted ? (
 					<button
-						disabled
-						className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1.5 rounded text-xs font-medium cursor-not-allowed whitespace-nowrap shrink-0"
+						onClick={handleWatchlistRemoveClick}
+						className="bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-500/20 px-2.5 py-1.5 rounded text-xs font-medium cursor-pointer whitespace-nowrap shrink-0 transition duration-200"
+						title="Remove from Watchlist"
 					>
-						✓ On Wishlist
+						✓ Watchlist
 					</button>
 				) : (
 					<button
