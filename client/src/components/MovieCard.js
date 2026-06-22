@@ -58,35 +58,17 @@ export default function MovieCard({ movie, isWatchlistPage = false, onRemove, on
 
 	const handleRemoveClick = async (e) => {
 		e.preventDefault();
-		try {
-			const res = await fetch(`${API_BASE_URL}/api/watchlist/${movie._id}`, {
-				method: "DELETE",
-			});
-
-			if (!res.ok) {
-				const data = await res.json();
-				throw new Error(data.error || "Failed to delete");
-			}
-
-			alert(`Removed "${title}" from watchlist.`);
-			if (onRemove) {
-				onRemove(movie._id);
-			}
-		} catch (err) {
-			console.error("[Watchlist Remove Error]:", err.message);
-			alert("Failed to remove item from watchlist.");
-		}
-	};
-
-	const handleWatchlistRemoveClick = async (e) => {
-		e.preventDefault();
-		if (!isSignedIn || !userId) {
+		if (!movie._id && (!isSignedIn || !userId)) {
 			router.push("/sign-in");
 			return;
 		}
 
 		try {
-			const res = await fetch(`${API_BASE_URL}/api/watchlist/user/${userId}/item/${id}?mediaType=${mediaType}`, {
+			const deleteUrl = movie._id
+				? `${API_BASE_URL}/api/watchlist/${movie._id}`
+				: `${API_BASE_URL}/api/watchlist/user/${userId}/item/${id}?mediaType=${mediaType}`;
+
+			const res = await fetch(deleteUrl, {
 				method: "DELETE",
 			});
 
@@ -96,11 +78,13 @@ export default function MovieCard({ movie, isWatchlistPage = false, onRemove, on
 			}
 
 			alert(`Removed "${title}" from watchlist.`);
-			if (onWatchlistRemoved) {
+			if (movie._id && onRemove) {
+				onRemove(movie._id);
+			} else if (onWatchlistRemoved) {
 				onWatchlistRemoved(id);
 			}
 		} catch (err) {
-			console.error("[Watchlist Remove Toggle Error]:", err.message);
+			console.error("[Watchlist Remove Error]:", err.message);
 			alert(`Failed to remove ${mediaType === "tv" ? "TV show" : "movie"} from watchlist.`);
 		}
 	};
@@ -191,7 +175,7 @@ export default function MovieCard({ movie, isWatchlistPage = false, onRemove, on
 				)}
 				{isWatchlistPage ? (
 					<button
-						onClick={handleWatchlistRemoveClick}
+						onClick={handleRemoveClick}
 						className="bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-500/20 px-2.5 py-1.5 rounded text-xs font-medium cursor-pointer whitespace-nowrap shrink-0 transition duration-200"
 						title="Remove from Watchlist"
 					>
@@ -199,7 +183,7 @@ export default function MovieCard({ movie, isWatchlistPage = false, onRemove, on
 					</button>
 				) : isWatchlisted ? (
 					<button
-						onClick={handleWatchlistRemoveClick}
+						onClick={handleRemoveClick}
 						className="bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-500/20 px-2.5 py-1.5 rounded text-xs font-medium cursor-pointer whitespace-nowrap shrink-0 transition duration-200"
 						title="Remove from Watchlist"
 					>
