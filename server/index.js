@@ -295,3 +295,76 @@ app.delete("/api/watchlist/user/:userId/item/:tmdbId", async (req, res) => {
 		res.status(500).json({ error: "Failed to remove item from watchlist" });
 	}
 });
+
+// Helper to calculate statistics from a watchlist
+function calculateWatchlistStats(watchlist) {
+	const genreCounts = {};
+	let watchedCount = 0;
+	let totalRating = 0;
+	let ratedCount = 0;
+	let movieCount = 0;
+	let tvCount = 0;
+
+	watchlist.forEach((item) => {
+		// Aggregate genres
+		if (item.genres && Array.isArray(item.genres)) {
+			item.genres.forEach((genre) => {
+				genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+			});
+		}
+
+		// Count watched
+		if (item.watched) {
+			watchedCount++;
+		}
+
+		// Count media types
+		if (item.mediaType === "tv") {
+			tvCount++;
+		} else {
+			movieCount++;
+		}
+
+		// Count average rating
+		if (typeof item.voteAverage === "number" && item.voteAverage > 0) {
+			totalRating += item.voteAverage;
+			ratedCount++;
+		}
+	});
+
+	// Transform genre counts to sorted array for Recharts
+	const genres = Object.keys(genreCounts)
+		.map((name) => ({
+			name,
+			count: genreCounts[name],
+		}))
+		.sort((a, b) => b.count - a.count);
+
+	const totalItems = watchlist.length;
+	const unwatchedCount = totalItems - watchedCount;
+	const averageRating = ratedCount > 0 ? Number((totalRating / ratedCount).toFixed(1)) : 0;
+
+	return {
+		totalItems,
+		movieCount,
+		tvCount,
+		watchedCount,
+		unwatchedCount,
+		averageRating,
+		genres,
+	};
+}
+
+// Route to fetch watchlist statistics for a user
+app.get("/api/watchlist/:userId/stats", async (req, res) => {
+	const { userId } = req.params;
+	try {
+		const watchlist = await Movie.find({ userId });
+		const stats = calculateWatchlistStats(watchlist);
+		res.json(stats);
+	} catch (error) {
+		console.error(`[GET /api/watchlist/${userId}/stats]`, error.message);
+		res.status(500).json({ error: "Failed to fetch watchlist statistics" });
+	}
+});
+

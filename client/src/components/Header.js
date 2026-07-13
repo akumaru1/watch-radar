@@ -16,6 +16,9 @@ export default function Header() {
 					<Link href="/watchlist" className="text-gray-300 hover:text-white font-medium text-sm transition-colors">
 						Watchlist
 					</Link>
+					<Link href="/genre-dna" className="text-gray-300 hover:text-white font-medium text-sm transition-colors">
+						Genre DNA
+					</Link>
 				</nav>
 			</div>
 			<div className="flex items-center gap-4">
