@@ -178,7 +178,7 @@ app.get("/api/shows/:id", async (req, res) => {
 // Route to save a movie or TV show to the watchlist
 app.post("/api/watchlist", async (req, res) => {
 	try {
-		const { userId, tmdbId, title, posterPath, genres, voteAverage, mediaType } = req.body;
+		const { userId, tmdbId, title, posterPath, genres, voteAverage, mediaType, status, episodesWatched, totalEpisodes } = req.body;
 
 		// Validation
 		if (!userId) {
@@ -199,6 +199,35 @@ app.post("/api/watchlist", async (req, res) => {
 			return res.status(400).json({ error: `${resolvedMediaType === "tv" ? "TV show" : "Movie"} already in watchlist` });
 		}
 
+		let resolvedTotalEpisodes = typeof totalEpisodes === "number" && totalEpisodes > 0 ? totalEpisodes : 1;
+
+		// Fetch total episodes from TMDB for TV shows if not provided
+		if (resolvedMediaType === "tv" && (!totalEpisodes || totalEpisodes <= 0) && TMDB_TOKEN) {
+			try {
+				const tmdbRes = await axios.get(`https://api.themoviedb.org/3/tv/${tmdbId}`, {
+					headers: {
+						Authorization: `Bearer ${TMDB_TOKEN}`,
+						Accept: "application/json",
+					},
+				});
+				if (tmdbRes.data && tmdbRes.data.number_of_episodes) {
+					resolvedTotalEpisodes = tmdbRes.data.number_of_episodes;
+				}
+			} catch (tmdbErr) {
+				console.warn(`[TMDB fetch episodes for ${tmdbId}]`, tmdbErr.message);
+			}
+		}
+
+		const initialStatus = status || "Plan to Watch";
+		let initialEpisodesWatched = typeof episodesWatched === "number" ? episodesWatched : 0;
+
+		if (initialStatus === "Completed") {
+			initialEpisodesWatched = resolvedTotalEpisodes;
+		}
+
+		initialEpisodesWatched = Math.max(0, Math.min(initialEpisodesWatched, resolvedTotalEpisodes));
+		const isWatched = initialStatus === "Completed";
+
 		// Create and save new watchlist item
 		const movie = new Movie({
 			userId,
@@ -208,7 +237,10 @@ app.post("/api/watchlist", async (req, res) => {
 			genres: genres || [],
 			voteAverage: voteAverage || 0,
 			mediaType: resolvedMediaType,
-			watched: false,
+			status: initialStatus,
+			episodesWatched: initialEpisodesWatched,
+			totalEpisodes: resolvedTotalEpisodes,
+			watched: isWatched,
 		});
 
 		await movie.save();
@@ -231,26 +263,69 @@ app.get("/api/watchlist/:userId", async (req, res) => {
 	}
 });
 
-// Route to update a watchlist item (e.g. toggle watched status)
+// Route to update a watchlist item (status, episode progress, or legacy watched status)
 app.patch("/api/watchlist/:id", async (req, res) => {
 	const { id } = req.params;
-	const { watched } = req.body;
-
-	if (typeof watched !== "boolean") {
-		return res.status(400).json({ error: "watched field must be a boolean" });
-	}
+	const { watched, status, episodesWatched, totalEpisodes } = req.body;
 
 	try {
-		const updatedMovie = await Movie.findByIdAndUpdate(
-			id,
-			{ watched },
-			{ new: true }
-		);
-
-		if (!updatedMovie) {
+		const existingItem = await Movie.findById(id);
+		if (!existingItem) {
 			return res.status(404).json({ error: "Watchlist item not found" });
 		}
 
+		let newTotalEpisodes = typeof totalEpisodes === "number" && totalEpisodes > 0 ? totalEpisodes : (existingItem.totalEpisodes || 1);
+		let newStatus = status !== undefined ? status : (existingItem.status || (existingItem.watched ? "Completed" : "Plan to Watch"));
+		let newEpisodesWatched = episodesWatched !== undefined ? episodesWatched : (existingItem.episodesWatched !== undefined ? existingItem.episodesWatched : (existingItem.watched ? newTotalEpisodes : 0));
+		let newWatched = existingItem.watched;
+
+		// Handle legacy `{ watched: boolean }` if status/episodesWatched not explicitly sent
+		if (typeof watched === "boolean" && status === undefined && episodesWatched === undefined) {
+			if (watched) {
+				newStatus = "Completed";
+				newEpisodesWatched = newTotalEpisodes;
+				newWatched = true;
+			} else {
+				newStatus = "Plan to Watch";
+				newEpisodesWatched = 0;
+				newWatched = false;
+			}
+		} else {
+			// If status explicitly updated
+			if (status !== undefined) {
+				if (status === "Completed") {
+					newEpisodesWatched = newTotalEpisodes;
+					newWatched = true;
+				} else {
+					newWatched = false;
+					// If user manually changed status to non-completed while episodesWatched was full, decrement by 1 so it doesn't auto-flip back to Completed
+					if (newEpisodesWatched >= newTotalEpisodes && newTotalEpisodes > 1) {
+						newEpisodesWatched = newTotalEpisodes - 1;
+					}
+				}
+			}
+
+			// If episodesWatched explicitly updated or adjusted
+			if (episodesWatched !== undefined) {
+				newEpisodesWatched = Math.max(0, Math.min(newEpisodesWatched, newTotalEpisodes));
+				if (newEpisodesWatched === newTotalEpisodes && newTotalEpisodes > 0) {
+					newStatus = "Completed";
+					newWatched = true;
+				} else if (newEpisodesWatched < newTotalEpisodes) {
+					if (newStatus === "Completed") {
+						newStatus = newEpisodesWatched > 0 ? "Currently Watching" : "Plan to Watch";
+					}
+					newWatched = false;
+				}
+			}
+		}
+
+		existingItem.status = newStatus;
+		existingItem.episodesWatched = newEpisodesWatched;
+		existingItem.totalEpisodes = newTotalEpisodes;
+		existingItem.watched = newWatched;
+
+		const updatedMovie = await existingItem.save();
 		res.json(updatedMovie);
 	} catch (error) {
 		console.error(`[PATCH /api/watchlist/${id}]`, error.message);
@@ -314,7 +389,7 @@ function calculateWatchlistStats(watchlist) {
 		}
 
 		// Count watched
-		if (item.watched) {
+		if (item.watched || item.status === "Completed") {
 			watchedCount++;
 		}
 

@@ -6,9 +6,9 @@ export default function MovieTrailer({ movie }) {
 	if (!trailer) return null;
 
 	return (
-		<section className="space-y-4">
-			<h2 className="text-2xl font-bold text-white border-b border-gray-900 pb-2 flex items-center gap-2">
-				<span>🎬</span> Official Trailer
+		<section className="relative z-10 space-y-4">
+			<h2 className="text-2xl font-bold text-white border-b border-gray-900 pb-2">
+				Official Trailer
 			</h2>
 			<div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-xl border border-gray-900 bg-black">
 				<iframe

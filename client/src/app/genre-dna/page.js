@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
-import Header from "@/components/Header";
 import {
 	ResponsiveContainer,
 	RadarChart,
@@ -76,7 +75,6 @@ export default function GenreDnaPage() {
 		return (
 			<main className="min-h-screen bg-gray-950 text-gray-100 font-sans pb-16 relative overflow-x-hidden">
 				<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-					<Header />
 					<div className="flex flex-col items-center justify-center py-20">
 						<div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
 						<p className="mt-4 text-gray-400 text-lg">Analyzing your Genre DNA...</p>
@@ -90,7 +88,6 @@ export default function GenreDnaPage() {
 		return (
 			<main className="min-h-screen bg-gray-950 text-gray-100 font-sans pb-16 relative overflow-x-hidden">
 				<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-					<Header />
 					<div className="flex flex-col items-center justify-center py-20 text-center">
 						<div className="text-red-500 text-5xl mb-4">⚠️</div>
 						<p className="text-red-400 text-xl font-semibold">{error}</p>
@@ -114,7 +111,6 @@ export default function GenreDnaPage() {
 		return (
 			<main className="min-h-screen bg-gray-950 text-gray-100 font-sans pb-16 relative overflow-x-hidden">
 				<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-					<Header />
 					<div className="flex flex-col items-center justify-center py-20 text-center bg-gray-800/10 border border-gray-800 rounded-2xl p-8 max-w-2xl mx-auto">
 						<div className="text-blue-500 text-7xl mb-4">🧬</div>
 						<h3 className="text-2xl font-bold mb-3 text-white">Your Genre DNA is empty</h3>
@@ -157,13 +153,11 @@ export default function GenreDnaPage() {
 	return (
 		<main className="min-h-screen bg-gray-950 text-gray-100 font-sans pb-16 relative overflow-x-hidden">
 			<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-				<Header />
-
 				{/* Header Section */}
 				<div className="mb-8 pb-4 border-b border-gray-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
 					<div>
 						<h2 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-2.5">
-							<span className="text-blue-400">🧬</span> Genre DNA
+							<span className="text-blue-400"></span> Genre DNA
 						</h2>
 						<p className="text-sm text-gray-400 mt-1">
 							A personalized breakdown of your watchlist and viewing preferences.
@@ -175,7 +169,7 @@ export default function GenreDnaPage() {
 				<div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
 					{/* Total Titles */}
 					<div className="bg-gray-900 border border-gray-800/80 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-gray-700/60 transition duration-300">
-						<div className="absolute top-4 right-4 text-2xl text-blue-500/30">🎬</div>
+						<div className="absolute top-4 right-4 text-2xl text-blue-500/30"></div>
 						<p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Titles</p>
 						<h3 className="text-3xl font-extrabold text-white mt-2">{stats.totalItems}</h3>
 						<div className="text-[11px] text-gray-500 mt-1.5">
@@ -185,7 +179,7 @@ export default function GenreDnaPage() {
 
 					{/* Top Genre */}
 					<div className="bg-gray-900 border border-gray-800/80 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-gray-700/60 transition duration-300">
-						<div className="absolute top-4 right-4 text-2xl text-pink-500/30">🔥</div>
+						<div className="absolute top-4 right-4 text-2xl text-pink-500/30"></div>
 						<p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Top Genre</p>
 						<h3 className="text-2xl font-extrabold text-white mt-2 truncate max-w-[90%]">{topGenre}</h3>
 						<div className="text-[11px] text-gray-500 mt-1.5">
@@ -195,7 +189,7 @@ export default function GenreDnaPage() {
 
 					{/* Average Rating */}
 					<div className="bg-gray-900 border border-gray-800/80 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-gray-700/60 transition duration-300">
-						<div className="absolute top-4 right-4 text-2xl text-yellow-500/30">⭐</div>
+						<div className="absolute top-4 right-4 text-2xl text-yellow-500/30"></div>
 						<p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Avg Rating</p>
 						<h3 className="text-3xl font-extrabold text-white mt-2">{stats.averageRating}</h3>
 						<div className="text-[11px] text-gray-500 mt-1.5">Across rated titles</div>
@@ -203,7 +197,7 @@ export default function GenreDnaPage() {
 
 					{/* Completion Rate */}
 					<div className="bg-gray-900 border border-gray-800/80 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-gray-700/60 transition duration-300">
-						<div className="absolute top-4 right-4 text-2xl text-emerald-500/30">✓</div>
+						<div className="absolute top-4 right-4 text-2xl text-emerald-500/30"></div>
 						<p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Completion</p>
 						<h3 className="text-3xl font-extrabold text-white mt-2">{watchPercent}%</h3>
 						<div className="text-[11px] text-gray-500 mt-1.5">
@@ -256,7 +250,7 @@ export default function GenreDnaPage() {
 								<h3 className="font-extrabold text-xl text-white">Your Genre Spectrum</h3>
 								<p className="text-xs text-gray-500 mt-0.5">Visual representation of your catalog</p>
 							</div>
-							
+
 							{/* Tab Switcher */}
 							<div className="inline-flex rounded-lg bg-gray-950 p-1 border border-gray-850 self-start sm:self-center">
 								<button
@@ -284,13 +278,13 @@ export default function GenreDnaPage() {
 								<ResponsiveContainer width="100%" height="100%">
 									<RadarChart cx="50%" cy="50%" outerRadius="80%" data={stats.genres}>
 										<PolarGrid stroke="#374151" strokeDasharray="3 3" />
-										<PolarAngleAxis 
-											dataKey="name" 
+										<PolarAngleAxis
+											dataKey="name"
 											tick={{ fill: "#9ca3af", fontSize: 11, fontWeight: 500 }}
 										/>
-										<PolarRadiusAxis 
-											angle={30} 
-											domain={[0, "auto"]} 
+										<PolarRadiusAxis
+											angle={30}
+											domain={[0, "auto"]}
 											tick={{ fill: "#6b7280", fontSize: 10 }}
 											axisLine={false}
 										/>
@@ -324,9 +318,9 @@ export default function GenreDnaPage() {
 											))}
 										</Pie>
 										<Tooltip content={<CustomTooltip />} />
-										<Legend 
-											verticalAlign="bottom" 
-											height={36} 
+										<Legend
+											verticalAlign="bottom"
+											height={36}
 											iconType="circle"
 											iconSize={8}
 											wrapperStyle={{ fontSize: "11px", color: "#9ca3af", paddingTop: "10px" }}

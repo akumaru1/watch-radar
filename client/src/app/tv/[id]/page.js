@@ -9,7 +9,6 @@ import TVTrailer from "./_components/TVTrailer";
 import TVCast from "./_components/TVCast";
 import TVStats from "./_components/TVStats";
 import TVSkeleton from "./_components/TVSkeleton";
-import Header from "@/components/Header";
 
 
 export default function TVDetailPage() {
@@ -103,8 +102,6 @@ export default function TVDetailPage() {
 
 			{/* Content layer */}
 			<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-				{/* Top navigation header */}
-				<Header />
 
 				{/* TVDetail renders the backdrop and hero block */}
 				<TVDetail 

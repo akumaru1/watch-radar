@@ -2,14 +2,23 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
-import Header from "@/components/Header";
 import MovieCard from "@/components/MovieCard";
+
+const STATUS_TABS = [
+	"All",
+	"Currently Watching",
+	"Completed",
+	"Plan to Watch",
+	"On Hold",
+	"Dropped",
+];
 
 export default function WatchlistPage() {
 	const { isLoaded, isSignedIn, userId } = useAuth();
 	const [watchlist, setWatchlist] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
+	const [activeTab, setActiveTab] = useState("All");
 
 	// Decider State
 	const [showDeciderModal, setShowDeciderModal] = useState(false);
@@ -52,18 +61,39 @@ export default function WatchlistPage() {
 		setWatchlist((prev) => prev.filter((movie) => movie._id !== id));
 	};
 
-	const handleToggleWatchedLocal = (id, newWatched) => {
+	const handleUpdateItemLocal = (updatedItem) => {
 		setWatchlist((prev) =>
-			prev.map((movie) =>
-				movie._id === id ? { ...movie, watched: newWatched } : movie
-			)
+			prev.map((movie) => (movie._id === updatedItem._id ? updatedItem : movie))
 		);
 	};
 
+	const handleToggleWatchedLocal = (id, newWatched, updatedMovie) => {
+		if (updatedMovie) {
+			handleUpdateItemLocal(updatedMovie);
+		} else {
+			setWatchlist((prev) =>
+				prev.map((movie) =>
+					movie._id === id
+						? {
+								...movie,
+								watched: newWatched,
+								status: newWatched ? "Completed" : "Plan to Watch",
+								episodesWatched: newWatched ? (movie.totalEpisodes || 1) : 0,
+						  }
+						: movie
+				)
+			);
+		}
+	};
+
 	const handleSurpriseMe = () => {
-		const unwatched = watchlist.filter((item) => !item.watched);
+		const unwatched = watchlist.filter(
+			(item) => item.status !== "Completed" && !item.watched
+		);
 		if (unwatched.length === 0) {
-			alert("All titles in your watchlist are marked as Watched! Mark some as unwatched first to use the Surprise Me selector.");
+			alert(
+				"All titles in your watchlist are marked as Completed! Mark some as Plan to Watch or Currently Watching to use the Surprise Me selector."
+			);
 			return;
 		}
 
@@ -99,7 +129,9 @@ export default function WatchlistPage() {
 		return () => clearTimeout(intervalId);
 	}, [deciderState, unwatchedItems]);
 
-	const moviesCount = watchlist.filter((item) => item.mediaType === "movie" || !item.mediaType).length;
+	const moviesCount = watchlist.filter(
+		(item) => item.mediaType === "movie" || !item.mediaType
+	).length;
 	const showsCount = watchlist.filter((item) => item.mediaType === "tv").length;
 
 	let countText = "";
@@ -111,11 +143,24 @@ export default function WatchlistPage() {
 		countText = `${moviesCount} ${moviesCount === 1 ? "Movie" : "Movies"}`;
 	}
 
+	const getTabCount = (tabName) => {
+		if (tabName === "All") return watchlist.length;
+		return watchlist.filter((item) => {
+			const itemStatus = item.status || (item.watched ? "Completed" : "Plan to Watch");
+			return itemStatus === tabName;
+		}).length;
+	};
+
+	const filteredWatchlist = watchlist.filter((item) => {
+		if (activeTab === "All") return true;
+		const itemStatus = item.status || (item.watched ? "Completed" : "Plan to Watch");
+		return itemStatus === activeTab;
+	});
+
 	if (!isLoaded || loading) {
 		return (
 			<main className="min-h-screen bg-gray-950 text-gray-100 font-sans pb-16 relative overflow-x-hidden">
 				<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-					<Header />
 					<div className="flex flex-col items-center justify-center py-20">
 						<div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
 						<p className="mt-4 text-gray-400 text-lg">Loading your watchlist...</p>
@@ -129,7 +174,6 @@ export default function WatchlistPage() {
 		return (
 			<main className="min-h-screen bg-gray-950 text-gray-100 font-sans pb-16 relative overflow-x-hidden">
 				<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-					<Header />
 					<div className="flex flex-col items-center justify-center py-20 text-center">
 						<div className="text-red-500 text-5xl mb-4">⚠️</div>
 						<p className="text-red-400 text-xl font-semibold">{error}</p>
@@ -148,8 +192,6 @@ export default function WatchlistPage() {
 	return (
 		<main className="min-h-screen bg-gray-950 text-gray-100 font-sans pb-16 relative overflow-x-hidden">
 			<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-				<Header />
-
 				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-800">
 					<div className="flex items-center gap-3">
 						<h2 className="text-2xl font-bold tracking-tight text-white">Your Watchlist</h2>
@@ -167,31 +209,60 @@ export default function WatchlistPage() {
 					)}
 				</div>
 
-				{watchlist.length > 0 ? (
+				{/* MyDramaList-Style Status Filter Tabs */}
+				{watchlist.length > 0 && (
+					<div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none">
+						{STATUS_TABS.map((tab) => {
+							const count = getTabCount(tab);
+							const isActive = activeTab === tab;
+							return (
+								<button
+									key={tab}
+									onClick={() => setActiveTab(tab)}
+									className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 flex items-center gap-2 cursor-pointer ${
+										isActive
+											? "bg-blue-600 text-white shadow-md shadow-blue-900/30"
+											: "bg-gray-900 text-gray-400 hover:text-white hover:bg-gray-850 border border-gray-800"
+									}`}
+								>
+									<span>{tab}</span>
+									<span
+										className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+											isActive ? "bg-white/20 text-white" : "bg-gray-800 text-gray-400"
+										}`}
+									>
+										{count}
+									</span>
+								</button>
+							);
+						})}
+					</div>
+				)}
+
+				{filteredWatchlist.length > 0 ? (
 					<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-						{watchlist.map((movie) => (
+						{filteredWatchlist.map((movie) => (
 							<MovieCard 
 								key={movie._id} 
 								movie={movie} 
 								isWatchlistPage={true} 
 								onRemove={handleRemoveLocal} 
 								onToggleWatched={handleToggleWatchedLocal}
+								onUpdateItem={handleUpdateItemLocal}
 							/>
 						))}
 					</div>
 				) : (
 					<div className="flex flex-col items-center justify-center py-20 text-center bg-gray-800/20 border border-gray-800 rounded-2xl p-8">
 						<div className="text-gray-600 text-7xl mb-4">🎬</div>
-						<h3 className="text-xl font-bold mb-2">Your watchlist is empty</h3>
+						<h3 className="text-xl font-bold mb-2">
+							{activeTab === "All" ? "Your watchlist is empty" : `No items under "${activeTab}"`}
+						</h3>
 						<p className="text-gray-400 max-w-md mb-6 text-sm">
-							Explore trending titles or search for your favorite movies to add them to your watchlist.
+							{activeTab === "All"
+								? "Explore trending titles or search for your favorite movies to add them to your watchlist."
+								: `Update the status of your saved movies or TV shows to see them here under ${activeTab}.`}
 						</p>
-						<Link 
-							href="/" 
-							className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 transition text-white font-medium rounded-lg text-sm shadow-md shadow-blue-900/30"
-						>
-							Go to Discovery
-						</Link>
 					</div>
 				)}
 			</div>

@@ -1,5 +1,3 @@
-import Header from "@/components/Header";
-
 export default function TVSkeleton() {
 	return (
 		<div className="min-h-screen bg-gray-950 text-gray-100 font-sans pb-16 relative overflow-x-hidden">
@@ -9,7 +7,6 @@ export default function TVSkeleton() {
 			</div>
 
 			<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-				<Header />
 
 				{/* Main TV Hero Section skeleton */}
 				<section className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-12">

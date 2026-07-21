@@ -6,7 +6,7 @@ export default function TVCast({ show }) {
 	return (
 		<section className="space-y-6">
 			<h2 className="text-2xl font-bold text-white border-b border-gray-900 pb-2">
-				🎭 Top Cast
+				Top Cast
 			</h2>
 			{topCast.length > 0 ? (
 				<div className="grid grid-cols-2 sm:grid-cols-3 gap-4">

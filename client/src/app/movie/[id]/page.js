@@ -9,7 +9,6 @@ import MovieTrailer from "./_components/MovieTrailer";
 import MovieCast from "./_components/MovieCast";
 import MovieStats from "./_components/MovieStats";
 import MovieSkeleton from "./_components/MovieSkeleton";
-import Header from "@/components/Header";
 
 
 export default function MovieDetailPage() {
@@ -103,8 +102,6 @@ export default function MovieDetailPage() {
 
 			{/* Content layer */}
 			<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-				{/* Top navigation header */}
-				<Header />
 
 				{/* MovieDetail renders the backdrop and hero block (genres, title, timeline, overview, poster) */}
 				<MovieDetail 

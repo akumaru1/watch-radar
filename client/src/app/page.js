@@ -1,29 +1,22 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useAuth } from "@clerk/nextjs";
+import { useSearchParams } from "next/navigation";
 import MovieCard from "@/components/MovieCard";
-import SearchBar from "@/components/SearchBar";
-import Header from "@/components/Header";
 
-export default function Home() {
-	// State for list of movies to display
+function HomeContent() {
+	const searchParams = useSearchParams();
+	const searchQuery = searchParams ? (searchParams.get("q") || "") : "";
+
 	const [movies, setMovies] = useState([]);
-	// State for list of TV shows to display
 	const [shows, setShows] = useState([]);
-	// State to track if the search/trending fetch is loading
 	const [loading, setLoading] = useState(true);
-	// State to track error messages
 	const [error, setError] = useState(null);
-	// State for the user's typed search query
-	const [searchQuery, setSearchQuery] = useState("");
 
-	// Backend API base URL fallback
 	const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-
 	const { isLoaded, isSignedIn, userId } = useAuth();
 	const [watchlistIds, setWatchlistIds] = useState(new Set());
 
-	// Fetch watchlist IDs to track what is already saved
 	useEffect(() => {
 		if (!isLoaded || !isSignedIn || !userId) {
 			setWatchlistIds(new Set());
@@ -46,7 +39,6 @@ export default function Home() {
 		fetchWatchlistIds();
 	}, [isLoaded, isSignedIn, userId, API_BASE_URL]);
 
-	// Function to fetch trending movies and TV shows in parallel
 	const fetchTrendingContent = useCallback(async () => {
 		setLoading(true);
 		setError(null);
@@ -75,12 +67,8 @@ export default function Home() {
 		}
 	}, [API_BASE_URL]);
 
-	// Function to execute search on both movies and TV shows
-	const handleSearch = async (e) => {
-		if (e) e.preventDefault();
-
-		// If query is empty, reset back to trending content
-		if (!searchQuery.trim()) {
+	const handleSearch = useCallback(async (query) => {
+		if (!query.trim()) {
 			await fetchTrendingContent();
 			return;
 		}
@@ -89,8 +77,8 @@ export default function Home() {
 		setError(null);
 		try {
 			const [moviesRes, showsRes] = await Promise.all([
-				fetch(`${API_BASE_URL}/api/search?q=${encodeURIComponent(searchQuery.trim())}`),
-				fetch(`${API_BASE_URL}/api/search/shows?q=${encodeURIComponent(searchQuery.trim())}`)
+				fetch(`${API_BASE_URL}/api/search?q=${encodeURIComponent(query.trim())}`),
+				fetch(`${API_BASE_URL}/api/search/shows?q=${encodeURIComponent(query.trim())}`)
 			]);
 
 			if (!moviesRes.ok || !showsRes.ok) {
@@ -105,11 +93,6 @@ export default function Home() {
 			const searchMoviesResults = moviesData.results || [];
 			const searchShowsResults = showsData.results || [];
 
-			console.log(`[Search Results for "${searchQuery}"]:`, {
-				movies: searchMoviesResults,
-				shows: searchShowsResults,
-			});
-
 			setMovies(searchMoviesResults);
 			setShows(searchShowsResults);
 		} catch (err) {
@@ -118,29 +101,19 @@ export default function Home() {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [API_BASE_URL, fetchTrendingContent]);
 
-	// Load trending content on component mount
 	useEffect(() => {
-		fetchTrendingContent();
-	}, [fetchTrendingContent]);
+		if (searchQuery.trim()) {
+			handleSearch(searchQuery);
+		} else {
+			fetchTrendingContent();
+		}
+	}, [searchQuery, handleSearch, fetchTrendingContent]);
 
 	return (
-		<main className="min-h-screen bg-gray-950 text-gray-100 font-sans pb-16 relative overflow-x-hidden">
+		<main className="min-h-screen text-gray-100 font-sans pb-16 relative overflow-x-hidden">
 			<div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-				<Header />
-
-				{/* Clean, abstracted Search Bar component */}
-				<SearchBar
-					searchQuery={searchQuery}
-					setSearchQuery={setSearchQuery}
-					handleSearch={handleSearch}
-					clearSearch={() => {
-						setSearchQuery("");
-						fetchTrendingContent();
-					}}
-				/>
-
 				{/* Loading indicator */}
 				{loading && (
 					<div className="p-10 text-center text-2xl text-gray-400">Loading...</div>
@@ -159,7 +132,7 @@ export default function Home() {
 							{/* Movie Results Section */}
 							<section>
 								<h2 className="text-2xl font-semibold mb-6 border-b border-gray-800 pb-2 flex items-center gap-2">
-									<span>🎬</span> Movie Search Results for "{searchQuery}"
+									<span></span> Movie Search Results for "{searchQuery}"
 								</h2>
 								{movies.length > 0 ? (
 									<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
@@ -195,7 +168,7 @@ export default function Home() {
 							{/* TV Show Results Section */}
 							<section>
 								<h2 className="text-2xl font-semibold mb-6 border-b border-gray-800 pb-2 flex items-center gap-2">
-									<span>📺</span> TV Show Search Results for "{searchQuery}"
+									<span></span> TV Show Search Results for "{searchQuery}"
 								</h2>
 								{shows.length > 0 ? (
 									<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
@@ -234,7 +207,7 @@ export default function Home() {
 							{/* Trending Movies Section */}
 							<section>
 								<h2 className="text-2xl font-semibold mb-6 border-b border-gray-800 pb-2 flex items-center gap-2">
-									<span>🎬</span> Trending Movies
+									<span></span> Trending Movies
 								</h2>
 								{movies.length > 0 ? (
 									<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
@@ -270,7 +243,7 @@ export default function Home() {
 							{/* Trending TV Shows Section */}
 							<section>
 								<h2 className="text-2xl font-semibold mb-6 border-b border-gray-800 pb-2 flex items-center gap-2">
-									<span>📺</span> Trending TV Shows
+									<span></span> Trending TV Shows
 								</h2>
 								{shows.length > 0 ? (
 									<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
@@ -307,5 +280,13 @@ export default function Home() {
 				)}
 			</div>
 		</main>
+	);
+}
+
+export default function Home() {
+	return (
+		<Suspense fallback={<div className="p-10 text-center text-gray-400">Loading...</div>}>
+			<HomeContent />
+		</Suspense>
 	);
 }

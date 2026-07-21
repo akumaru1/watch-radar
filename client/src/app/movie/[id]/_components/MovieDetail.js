@@ -1,18 +1,52 @@
 "use client";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
 export default function MovieDetail({ movie, isWatchlisted = false, onWatchlistAdded }) {
-	const { isSignedIn, userId } = useAuth();
+	const { isLoaded, isSignedIn, userId } = useAuth();
 	const router = useRouter();
 	const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-	const handleWatchlistClick = async () => {
+	const [localWatchlisted, setLocalWatchlisted] = useState(isWatchlisted);
+	const [localStatus, setLocalStatus] = useState("Plan to Watch");
+	const [localWatchlistId, setLocalWatchlistId] = useState(null);
+
+	useEffect(() => {
+		setLocalWatchlisted(isWatchlisted);
+	}, [isWatchlisted]);
+
+	useEffect(() => {
+		if (!isLoaded || !isSignedIn || !userId || !movie?.id) return;
+		const fetchStatus = async () => {
+			try {
+				const res = await fetch(`${API_BASE_URL}/api/watchlist/${userId}`);
+				if (res.ok) {
+					const data = await res.json();
+					const found = data.find(
+						(item) => item.tmdbId === Number(movie.id) && item.mediaType !== "tv"
+					);
+					if (found) {
+						setLocalWatchlisted(true);
+						setLocalStatus(found.status || (found.watched ? "Completed" : "Plan to Watch"));
+						setLocalWatchlistId(found._id);
+					}
+				}
+			} catch (err) {
+				console.error("[Fetch Watchlist Detail Status Error]:", err.message);
+			}
+		};
+		fetchStatus();
+	}, [isLoaded, isSignedIn, userId, movie?.id, API_BASE_URL]);
+
+	const handleWatchlistAddWithStatus = async (chosenStatus) => {
 		if (!isSignedIn) {
 			router.push("/sign-in");
 			return;
 		}
+
+		const statusToSave = chosenStatus || "Plan to Watch";
 
 		try {
 			const genres = movie.genres?.map((g) => g.name || g) || [];
@@ -28,6 +62,8 @@ export default function MovieDetail({ movie, isWatchlisted = false, onWatchlistA
 					posterPath: movie.poster_path || "",
 					genres,
 					voteAverage: movie.vote_average,
+					mediaType: "movie",
+					status: statusToSave,
 				}),
 			});
 
@@ -35,7 +71,10 @@ export default function MovieDetail({ movie, isWatchlisted = false, onWatchlistA
 				const data = await res.json();
 				alert(data.error || "Failed to add movie to watchlist");
 			} else {
-				alert(`Successfully added "${movie.title}" to watchlist!`);
+				const savedItem = await res.json();
+				setLocalWatchlisted(true);
+				setLocalStatus(savedItem.status || statusToSave);
+				if (savedItem._id) setLocalWatchlistId(savedItem._id);
 				if (onWatchlistAdded) {
 					onWatchlistAdded();
 				}
@@ -43,6 +82,56 @@ export default function MovieDetail({ movie, isWatchlisted = false, onWatchlistA
 		} catch (err) {
 			console.error("[Watchlist Add Error]:", err.message);
 			alert("Failed to add movie to watchlist.");
+		}
+	};
+
+	const handleRemoveClick = async () => {
+		if (!isSignedIn || !userId) {
+			router.push("/sign-in");
+			return;
+		}
+
+		try {
+			const deleteUrl = localWatchlistId
+				? `${API_BASE_URL}/api/watchlist/${localWatchlistId}`
+				: `${API_BASE_URL}/api/watchlist/user/${userId}/item/${movie.id}?mediaType=movie`;
+
+			const res = await fetch(deleteUrl, { method: "DELETE" });
+			if (!res.ok) {
+				const data = await res.json();
+				throw new Error(data.error || "Failed to remove");
+			}
+
+			setLocalWatchlisted(false);
+			setLocalWatchlistId(null);
+		} catch (err) {
+			console.error("[Watchlist Remove Error]:", err.message);
+			alert("Failed to remove movie from watchlist.");
+		}
+	};
+
+	const handleStatusChange = async (newStatus) => {
+		if (!localWatchlisted || !localWatchlistId) {
+			return handleWatchlistAddWithStatus(newStatus);
+		}
+
+		try {
+			const res = await fetch(`${API_BASE_URL}/api/watchlist/${localWatchlistId}`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ status: newStatus }),
+			});
+
+			if (!res.ok) {
+				const data = await res.json();
+				throw new Error(data.error || "Failed to update status");
+			}
+
+			const updated = await res.json();
+			setLocalStatus(updated.status);
+		} catch (err) {
+			console.error("[Watchlist Status Error]:", err.message);
+			alert("Failed to update status.");
 		}
 	};
 
@@ -157,22 +246,53 @@ export default function MovieDetail({ movie, isWatchlisted = false, onWatchlistA
 							</p>
 						</div>
 
-						{/* Watchlist Quick-Action */}
+						{/* Watchlist Quick-Action Button with attached status dropdown */}
 						<div className="pt-6">
-							{isWatchlisted ? (
-								<button 
-									disabled
-									className="flex items-center gap-2 px-6 py-3 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold rounded-xl cursor-not-allowed"
-								>
-									<span>✓ On Wishlist</span>
-								</button>
+							{localWatchlisted ? (
+								<div className="inline-flex rounded-xl overflow-hidden border border-emerald-500/30 shadow-lg">
+									<button 
+										onClick={handleRemoveClick}
+										className="flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition cursor-pointer"
+										title="Click to remove from Watchlist"
+									>
+										<span>✓ Watchlist</span>
+									</button>
+									<select
+										value={localStatus}
+										onChange={(e) => handleStatusChange(e.target.value)}
+										className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold px-3 py-3 border-l border-emerald-500/40 outline-none cursor-pointer appearance-none text-center"
+										title="Change status"
+									>
+										<option value="Plan to Watch" className="bg-gray-900 text-white">Plan to Watch</option>
+										<option value="Currently Watching" className="bg-gray-900 text-white">Watching</option>
+										<option value="Completed" className="bg-gray-900 text-white">Completed</option>
+										<option value="On Hold" className="bg-gray-900 text-white">On Hold</option>
+										<option value="Dropped" className="bg-gray-900 text-white">Dropped</option>
+									</select>
+								</div>
 							) : (
-								<button 
-									onClick={handleWatchlistClick}
-									className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition shadow-lg hover:shadow-blue-600/10 cursor-pointer"
-								>
-									<span>+ Add to Watchlist</span>
-								</button>
+								<div className="inline-flex rounded-xl overflow-hidden border border-blue-500/30 shadow-lg">
+									<button 
+										onClick={() => handleWatchlistAddWithStatus("Plan to Watch")}
+										className="flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition cursor-pointer"
+										title="Add to Watchlist"
+									>
+										<span>+ Watchlist</span>
+									</button>
+									<select
+										value=""
+										onChange={(e) => handleWatchlistAddWithStatus(e.target.value)}
+										className="bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold px-3 py-3 border-l border-blue-500/40 outline-none cursor-pointer appearance-none text-center"
+										title="Select status to add to Watchlist"
+									>
+										<option value="" disabled hidden>▼</option>
+										<option value="Plan to Watch" className="bg-gray-900 text-white">Plan to Watch</option>
+										<option value="Currently Watching" className="bg-gray-900 text-white">Watching</option>
+										<option value="Completed" className="bg-gray-900 text-white">Completed</option>
+										<option value="On Hold" className="bg-gray-900 text-white">On Hold</option>
+										<option value="Dropped" className="bg-gray-900 text-white">Dropped</option>
+									</select>
+								</div>
 							)}
 						</div>
 					</div>
@@ -181,3 +301,4 @@ export default function MovieDetail({ movie, isWatchlisted = false, onWatchlistA
 		</>
 	);
 }
+

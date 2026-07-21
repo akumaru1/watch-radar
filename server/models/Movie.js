@@ -32,6 +32,19 @@ const movieSchema = new mongoose.Schema(
 			enum: ["movie", "tv"],
 			default: "movie",
 		},
+		status: {
+			type: String,
+			enum: ["Currently Watching", "Completed", "Plan to Watch", "On Hold", "Dropped"],
+			default: "Plan to Watch",
+		},
+		episodesWatched: {
+			type: Number,
+			default: 0,
+		},
+		totalEpisodes: {
+			type: Number,
+			default: 1,
+		},
 		watched: {
 			type: Boolean,
 			default: false,
