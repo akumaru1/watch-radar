@@ -1,6 +1,6 @@
 # Watch Radar
 
-> **Watch Radar** is a full-stack media discovery, personal watchlist management, and viewer analytics web application. Built with Next.js, Express.js, MongoDB, and Clerk Authentication, Watch Radar empowers users to search movies and TV shows, manage custom watchlists with watched/unwatched states, resolve viewing indecision via a built-in randomizer ("The Decider"), and explore their media viewing profile via interactive "Genre DNA" charts.
+A full-stack media discovery, personal watchlist management, and viewer analytics web application. Watch Radar empowers users to search movies and TV shows, manage custom watchlists with watched/unwatched states, resolve viewing indecision via a built-in randomizer ("The Decider"), and explore their media viewing profile via interactive "Genre DNA" charts.
 
 ---
 
@@ -18,15 +18,15 @@
 ## Tech Stack
 
 ### Frontend (`/client`)
-- **Framework**: [Next.js](https://nextjs.org/) (App Router, React 19)
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
-- **Data Visualization**: [Recharts](https://recharts.org/)
-- **Authentication**: [Clerk](https://clerk.com/) (`@clerk/nextjs`)
+- **Framework**: Next.js (App Router, React 19)
+- **Styling**: Tailwind CSS v4
+- **Data Visualization**: Recharts
+- **Authentication**: Clerk (`@clerk/nextjs`)
 
 ### Backend (`/server`)
-- **Runtime**: [Node.js](https://nodejs.org/)
-- **Framework**: [Express.js v5](https://expressjs.com/)
-- **Database**: [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) with [Mongoose v9](https://mongoosejs.com/)
+- **Runtime**: Node.js
+- **Framework**: Express.js v5
+- **Database**: MongoDB Atlas
 - **HTTP Client**: Axios
 
 ### External API
@@ -79,7 +79,7 @@ Ensure you have the following installed / configured:
 
 #### 1. Clone the Repository
 ```bash
-git clone https://github.com/your-username/watch-radar.git
+git clone https://github.com/akumaru1/watch-radar.git
 cd watch-radar
 ```
 
@@ -207,21 +207,3 @@ curl http://localhost:5000/api/watchlist/<userId>/stats
   ```bash
   cd client && npm run build
   ```
-
----
-
-## Documentation & Plans
-
-Detailed architectural plans and feature completion walkthroughs are located under the [`docs/`](file:///home/akumaru/dev/watch-radar/docs) folder:
-
-- **Authentication**: [Plan](file:///home/akumaru/dev/watch-radar/docs/plans/authentication_plan.md) | [Walkthrough](file:///home/akumaru/dev/watch-radar/docs/walkthroughs/authentication_walkthrough.md)
-- **Watchlist**: [Plan](file:///home/akumaru/dev/watch-radar/docs/plans/watchlist_plan.md) | [Walkthrough](file:///home/akumaru/dev/watch-radar/docs/walkthroughs/watchlist_walkthrough.md)
-- **TV Show Support**: [Plan](file:///home/akumaru/dev/watch-radar/docs/plans/tv_show_support_plan.md) | [Walkthrough](file:///home/akumaru/dev/watch-radar/docs/walkthroughs/tv_show_support_walkthrough.md)
-- **The Decider**: [Plan](file:///home/akumaru/dev/watch-radar/docs/plans/decider_plan.md) | [Walkthrough](file:///home/akumaru/dev/watch-radar/docs/walkthroughs/decider_walkthrough.md)
-- **Genre DNA**: [Plan](file:///home/akumaru/dev/watch-radar/docs/plans/genre_dna_plan.md) | [Walkthrough](file:///home/akumaru/dev/watch-radar/docs/walkthroughs/genre_dna_walkthrough.md)
-
----
-
-## License
-
-This project is licensed under the [ISC License](LICENSE).
